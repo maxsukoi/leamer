@@ -1,0 +1,175 @@
+package com.cinebook.app.ui
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.cinebook.app.viewmodel.AuthViewModel
+
+@Composable
+fun LoginScreen(auth: AuthViewModel, onLoggedIn: () -> Unit) {
+    val user by auth.user.collectAsState()
+    val error by auth.error.collectAsState()
+
+    var isRegister by remember { mutableStateOf(false) }
+    var username by remember { mutableStateOf("") }
+    var displayName by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var showPassword by remember { mutableStateOf(false) }
+
+    LaunchedEffect(user) {
+        if (user != null) onLoggedIn()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(MaterialTheme.colorScheme.background, MaterialTheme.colorScheme.surface)
+                )
+            )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 28.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(88.dp)
+                    .background(Accent, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("🎬", fontSize = 44.sp)
+            }
+            Spacer(Modifier.height(16.dp))
+            Text("Leamer Cinema", fontSize = 34.sp, fontWeight = FontWeight.ExtraBold,
+                color = Color.White
+            )
+            Text(
+                "หนังสุดระทึกของกลุ่มสี่ตามาสี่คน",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(32.dp))
+
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it; auth.clearError() },
+                label = { Text("ชื่อผู้ใช้") },
+                leadingIcon = { Icon(Icons.Filled.Person, null) },
+                singleLine = true,
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (isRegister) {
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = displayName,
+                    onValueChange = { displayName = it; auth.clearError() },
+                    label = { Text("ชื่อที่แสดง") },
+                    leadingIcon = { Icon(Icons.Filled.Badge, null) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it; auth.clearError() },
+                label = { Text("รหัสผ่าน") },
+                leadingIcon = { Icon(Icons.Filled.Lock, null) },
+                trailingIcon = {
+                    IconButton(onClick = { showPassword = !showPassword }) {
+                        Icon(
+                            if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                            contentDescription = "แสดง/ซ่อนรหัสผ่าน"
+                        )
+                    }
+                },
+                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                singleLine = true,
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            error?.let {
+                Spacer(Modifier.height(10.dp))
+                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
+
+            Spacer(Modifier.height(20.dp))
+            Button(
+                onClick = {
+                    if (isRegister) auth.register(username, displayName, password)
+                    else auth.login(username, password)
+                },
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            ) {
+                Text(if (isRegister) "สมัครสมาชิก" else "เข้าสู่ระบบ", fontWeight = FontWeight.Bold)
+            }
+
+            TextButton(onClick = { isRegister = !isRegister; auth.clearError() }) {
+                Text(
+                    if (isRegister) "มีบัญชีอยู่แล้ว? เข้าสู่ระบบ" else "ยังไม่มีบัญชี? สมัครสมาชิก",
+                    color = Gold
+                )
+            }
+        }
+    }
+}
